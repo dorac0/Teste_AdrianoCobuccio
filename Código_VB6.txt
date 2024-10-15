@@ -1,0 +1,139 @@
+Option Explicit
+
+Private cn As ADODB.Connection
+Private rs As ADODB.Recordset
+Private SQL As String
+
+Private Sub Form_Load()
+
+    Set cn = New ADODB.Connection
+    On Error GoTo ErrorHandler
+    cn.Open "Provider=Microsoft.ACE.OLEDB.12.0;Data Source=C:\Users\issou\OneDrive\Documentos\Database1.accdb;"
+    MsgBox "Conexão estabelecida com sucesso!"
+    
+    Call btnCarregarDados_Click
+    Exit Sub
+
+ErrorHandler:
+    MsgBox "Erro ao conectar ao banco de dados: " & Err.Description, vbCritical
+    
+End Sub
+
+Private Sub btnInsert_Click()
+
+    Dim SQL As String
+    
+    SQL = "INSERT INTO Transacoes (Numero_Cartao, Valor_Transacao, Data_Transacao, Descricao) " & _
+          "VALUES ('1234567890123456', 100.00, #" & Format(Date, "MM/DD/YYYY") & "#, 'Teste')"
+          
+    On Error GoTo ErrorHandler
+    cn.Execute SQL
+
+    MsgBox "Transação de teste inserida com sucesso!", vbInformation
+    Call btnCarregarDados_Click
+    Exit Sub
+
+ErrorHandler:
+    MsgBox "Erro ao inserir transação: " & Err.Description, vbCritical
+    
+End Sub
+
+Private Sub btnEditar_Click()
+
+    Dim SQL As String
+    Dim id As Integer
+
+    If IsNull(txtIdTransacao.Text) Or txtIdTransacao.Text = "" Then
+        MsgBox "Selecione uma transação para editar!", vbExclamation
+        Exit Sub
+    End If
+
+    id = CInt(txtIdTransacao.Text)
+
+    SQL = "UPDATE Transacoes SET " & _
+          "Numero_Cartao = '" & txtNumeroCartao.Text & "', " & _
+          "Valor_Transacao = " & CDbl(txtValorTransacao.Text) & ", " & _
+          "Data_Transacao = #" & Format(CDate(txtDataTransacao.Text), "MM/DD/YYYY") & "#, " & _
+          "Descricao = '" & Replace(txtDescricao.Text, "'", "''") & "' " & _
+          "WHERE Id_Transacao = " & id
+
+    On Error GoTo ErrorHandler
+    cn.Execute SQL
+
+    MsgBox "Transação editada com sucesso!", vbInformation
+    Call btnCarregarDados_Click
+    Exit Sub
+
+ErrorHandler:
+    MsgBox "Erro ao editar transação: " & Err.Description, vbCritical
+    
+End Sub
+
+Private Sub btnExcluir_Click()
+
+    Dim SQL As String
+    Dim id As Integer
+
+    If IsNull(txtIdTransacao.Text) Or txtIdTransacao.Text = "" Then
+        MsgBox "Selecione uma transação para excluir!", vbExclamation
+        Exit Sub
+    End If
+
+    id = CInt(txtIdTransacao.Text)
+
+    SQL = "DELETE FROM Transacoes WHERE Id_Transacao = " & id
+
+    On Error GoTo ErrorHandler
+    cn.Execute SQL
+
+    MsgBox "Transação excluída com sucesso!", vbInformation
+    Call btnCarregarDados_Click
+    Exit Sub
+
+ErrorHandler:
+    MsgBox "Erro ao excluir transação: " & Err.Description, vbCritical
+    
+End Sub
+Private Sub btnCarregarDados_Click()
+
+    On Error GoTo ErrorHandler
+    
+    Set rs = New ADODB.Recordset
+    SQL = "SELECT * FROM Transacoes"
+    rs.Open SQL, cn, adOpenStatic, adLockReadOnly
+    
+    Set DataGrid1.DataSource = rs
+
+    If rs.EOF Then
+        MsgBox "Nenhuma transação encontrada!", vbInformation
+    End If
+
+    Exit Sub
+
+ErrorHandler:
+    MsgBox "Erro ao carregar dados: " & Err.Description, vbCritical
+    
+End Sub
+
+Private Sub DataGrid1_Click()
+
+    If Not rs.EOF And Not rs.BOF Then
+        txtIdTransacao.Text = rs.Fields("Id_Transacao").Value
+        txtNumeroCartao.Text = rs.Fields("Numero_Cartao").Value
+        txtValorTransacao.Text = rs.Fields("Valor_Transacao").Value
+        txtDataTransacao.Text = Format(rs.Fields("Data_Transacao").Value, "dd/mm/yyyy")
+        txtDescricao.Text = rs.Fields("Descricao").Value
+    End If
+    
+End Sub
+
+Private Sub btnLimpar_Click()
+
+    txtIdTransacao.Text = ""
+    txtNumeroCartao.Text = ""
+    txtValorTransacao.Text = ""
+    txtDataTransacao.Text = ""
+    txtDescricao.Text = ""
+    
+End Sub
+
